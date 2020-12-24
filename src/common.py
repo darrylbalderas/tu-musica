@@ -21,3 +21,5 @@ class AudioFeatures:
 class Song:
     name: str
     uri: str
+    external_url: str
+    popularity: int

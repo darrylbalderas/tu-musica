@@ -1,7 +1,9 @@
+from typing import List
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 from src.common import Song, AudioFeatures
 from src.config import Configuration
+import json
 
 
 class SpotifyClient:
@@ -10,7 +12,8 @@ class SpotifyClient:
         self.config = config
 
     def get_artists_uris(self, artists_to_search):
-        artists = set()
+        searched_artists = {}
+        artists = []
         for artist_to_search in artists_to_search:
             results = self.client.search(q=artist_to_search, limit=1)
             tracks = results['tracks']['items']
@@ -18,26 +21,39 @@ class SpotifyClient:
                 continue
             for track in tracks:
                 for artist in track.get("artists"):
-                    if artist_to_search.lower() in artist["name"].lower():
-                        artists.add(artist["uri"])
+                    is_artist = artist_to_search.lower() in artist["name"].lower()
+                    has_searched = artist["name"].lower() in searched_artists
+                    if is_artist and not has_searched:
+                        artists.append(artist["uri"])
         return artists
 
-    def personal_recommendations(self, genres, artists_to_search):
+    def top_recommend_songs(self, genres: List[str], artists_to_search: List[str]):
+        # TODO: Use Multiprocessing to pull uris
         artist_uris = self.get_artists_uris(artists_to_search)
-        recommendations = [] + self.client.recommendations(
-            seed_genres=genres)["tracks"] + self.client.recommendations(
-                seed_artists=artist_uris)["tracks"]
-        tracks = set()
-        for track in recommendations:
-            uri, song = track["uri"], track["name"]
-            if not self.validate_audio_features(uri):
-                continue
-            tracks.add(Song(song, uri))
-        return list(tracks)
 
-    def validate_audio_features(self, track_id: str):
-        track_name = self.client.track(track_id)["name"]
-        audio_features = self.client.audio_features([track_id])[0]
+        # TODO: Use Multiprocessing to gather recommendations
+        recommendations = []
+        for r in self.client.recommendations(seed_genres=genres)["tracks"]:
+            recommendations.append(r)
+
+        for r in self.client.recommendations(seed_artists=artist_uris)["tracks"]:
+            recommendations.append(r)
+
+        visited_tracks = set()
+        songs = []
+
+        for track in recommendations:
+            popularity, url = track["popularity"], track['external_urls']['spotify']
+            track_uri, track_name = track["uri"], track["name"]
+            if track_name in visited_tracks:
+                continue
+            if not self.pass_audio_criteria(track_uri, track_name):
+                continue
+            songs.append(Song(track_name, track_uri, url, popularity))
+        return self.top_songs(songs)
+
+    def pass_audio_criteria(self, track_uri: str, track_name: str):
+        audio_features = self.client.audio_features([track_uri])[0]
         track_features = self.parse_audio_features(track_name, audio_features)
         # TODO: Create SongFilter Class
         is_twerkable = track_features.tempo > 105 and track_features.danceability > 0.60
@@ -52,8 +68,10 @@ class SpotifyClient:
 
     def top_songs(self, tracks):
         results = []
-        for i in range(self.config.num_top_songs):
-            uri, song, = tracks[i].uri, tracks[i].name
-            uri = uri.split(":")[-1]
-            results.append(f"{song}: {f'https://open.spotify.com/track/{uri}'}\n\n")
+
+        for i, t in enumerate(sorted(tracks, key=lambda x: x.popularity, reverse=True)):
+            if i >= self.config.num_top_songs:
+                break
+            results.append(f"{t.name}: {t.external_url}\n\n")
+
         return results

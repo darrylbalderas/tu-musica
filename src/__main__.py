@@ -10,12 +10,8 @@ def main():
     artists_to_search = ["bab bunny", "anuel aa", "burna boy", "drake", "j balvin"]
     genres = ["afrobeat", "latin", "latino", "r-n-b", "reggeaton"]
 
-    client.top_songs(client.personal_recommendations(genres, artists_to_search))
+    songs = client.top_recommend_songs(genres, artists_to_search)
 
-    songs = client.top_songs(client.personal_recommendations(genres, artists_to_search))
+    tc = TwilioClient(configuration)
 
-    print(songs)
-
-    # tc = TwilioClient(configuration)
-
-    # tc.send_messages(songs)
+    tc.send_messages(songs)
