@@ -1,3 +1,4 @@
+from twilio.rest.api.v2010.account import message
 from src.config import Configuration
 from src.spotify_client import SpotifyClient
 from src.twilio_client import TwilioClient
@@ -10,8 +11,10 @@ def main():
     artists_to_search = ["bab bunny", "anuel aa", "burna boy", "drake", "j balvin"]
     genres = ["afrobeat", "latin", "latino", "r-n-b", "reggeaton"]
 
-    songs = client.top_recommend_songs(genres, artists_to_search)
+    recommend_songs = client.top_recommend_songs(genres, artists_to_search)
 
-    tc = TwilioClient(configuration)
+    messages = [f"{s.name}: {s.external_url}\n\n" for s in recommend_songs]
 
-    tc.send_messages(songs)
+    print(messages)
+
+    # TwilioClient(configuration).send_messages(messages)

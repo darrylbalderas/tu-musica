@@ -16,6 +16,12 @@ class AudioFeatures:
     valence: float
     tempo: float
 
+    def is_twerkable(self):
+        return self.tempo > 105 and self.danceability > 0.60
+
+    def is_clubworthy(self):
+        return self.loudness <= -5.0 and self.energy >= 0.5
+
 
 @dataclass(frozen=True, eq=True)
 class Song:
