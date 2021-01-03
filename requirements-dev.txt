@@ -1,0 +1,11 @@
+diagrams
+black
+eradicate
+vulture
+coverage
+pycodestyle
+pylint
+mypy
+pyflakes
+bandit
+radon
