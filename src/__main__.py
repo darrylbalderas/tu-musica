@@ -1,4 +1,3 @@
-from twilio.rest.api.v2010.account import message
 from src.config import Configuration
 from src.spotify_client import SpotifyClient
 from src.twilio_client import TwilioClient
@@ -17,4 +16,4 @@ def main():
 
     print(messages)
 
-    # TwilioClient(configuration).send_messages(messages)
+    TwilioClient(configuration).send_messages(messages)

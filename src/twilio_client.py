@@ -16,7 +16,9 @@ class TwilioClient:
     def send_messages(self, messages):
         if not self.config.number_to_send:
             raise ValueError("Invalid phone number you are trying to send message")
-        response = self.client.messages.create(body=" ".join(messages),
-                                               from_=self.config.number_from,
-                                               to=self.config.number_to_send)
+        response = self.client.messages.create(
+            body=" ".join(messages),
+            from_=self.config.number_from,
+            to=self.config.number_to_send,
+        )
         return response

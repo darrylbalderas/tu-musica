@@ -26,7 +26,7 @@ class SpotifyClient:
     def search_artist_tracks(self, artists_to_search):
         for artist_to_search in artists_to_search:
             results = self.client.search(q=artist_to_search, limit=1)
-            tracks = results['tracks']['items']
+            tracks = results["tracks"]["items"]
             if len(tracks) == 0:
                 continue
             yield artist_to_search.lower(), tracks
@@ -40,8 +40,12 @@ class SpotifyClient:
 
         # TODO: Use Multiprocessing to gather recommendations
         for track in self.recommend_tracks(genres, artist_uris):
-            song = Song(track["name"], track["uri"], track['external_urls']['spotify'],
-                        track["popularity"])
+            song = Song(
+                track["name"],
+                track["uri"],
+                track["external_urls"]["spotify"],
+                track["popularity"],
+            )
             if song.name in visited_tracks:
                 continue
             if not self.pass_audio_criteria(song.uri, song.name):
@@ -52,7 +56,8 @@ class SpotifyClient:
     def recommend_tracks(self, genres, artist_uris):
         return chain(
             self.client.recommendations(seed_genres=genres)["tracks"],
-            self.client.recommendations(seed_artists=artist_uris)["tracks"])
+            self.client.recommendations(seed_artists=artist_uris)["tracks"],
+        )
 
     def pass_audio_criteria(self, track_uri: str, track_name: str):
         # TODO: Handle 503 errors for getting audio features
@@ -66,11 +71,23 @@ class SpotifyClient:
         return track_features.is_twerkable() and track_features.is_clubworthy()
 
     def parse_audio_features(self, name: str, track: dict):
-        return AudioFeatures(name, track["danceability"], track["energy"], track["key"],
-                             track["loudness"], track["mode"], track["speechiness"],
-                             track["acousticness"], track["instrumentalness"],
-                             track["liveness"], track["valence"], track["tempo"])
+        return AudioFeatures(
+            name,
+            track["danceability"],
+            track["energy"],
+            track["key"],
+            track["loudness"],
+            track["mode"],
+            track["speechiness"],
+            track["acousticness"],
+            track["instrumentalness"],
+            track["liveness"],
+            track["valence"],
+            track["tempo"],
+        )
 
     def top_songs(self, tracks):
-        return islice(sorted(tracks, key=lambda x: x.popularity, reverse=True),
-                      self.config.num_top_songs)
+        return islice(
+            sorted(tracks, key=lambda x: x.popularity, reverse=True),
+            self.config.num_top_songs,
+        )
