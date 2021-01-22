@@ -12,8 +12,11 @@ def main():
 
     recommend_songs = client.top_recommend_songs(genres, artists_to_search)
 
-    messages = [f"{s.name}: {s.external_url}\n\n" for s in recommend_songs]
+    for s in recommend_songs:
+        print(s)
 
-    print(messages)
+    # messages = [f"{s.name}: {s.external_url}\n\n" for s in recommend_songs]
 
-    TwilioClient(configuration).send_messages(messages)
+    # print(messages)
+
+    # TwilioClient(configuration).send_messages(messages)

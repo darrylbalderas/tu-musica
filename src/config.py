@@ -1,10 +1,11 @@
-import os
+from src.settings import NUM_TOP_SONGS, TWILIO_ACCOUNT_SID, TWILIO_NUMBER_TO_SEND
+from src.settings import TWILIO_AUTH_TOKEN, TWILIO_NUMBER_FROM
 
 
 class Configuration:
     def __init__(self) -> None:
-        self.num_top_songs = int(os.environ.get("NUM_TOP_SONGS"))
-        self.number_to_send = os.environ.get("TWILIO_NUMBER_TO_SEND")
-        self.account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-        self.auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
-        self.number_from = os.environ.get("TWILIO_NUMBER_FROM")
+        self.num_top_songs = NUM_TOP_SONGS
+        self.number_to_send = TWILIO_NUMBER_TO_SEND
+        self.account_sid = TWILIO_ACCOUNT_SID
+        self.auth_token = TWILIO_AUTH_TOKEN
+        self.number_from = TWILIO_NUMBER_FROM
