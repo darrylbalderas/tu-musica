@@ -1,5 +1,6 @@
 from src.settings import NUM_TOP_SONGS, TWILIO_ACCOUNT_SID, TWILIO_NUMBER_TO_SEND
 from src.settings import TWILIO_AUTH_TOKEN, TWILIO_NUMBER_FROM, SLACK_WEBHOOK
+from src.settings import AWS_REGION
 
 
 class Configuration:
@@ -10,3 +11,4 @@ class Configuration:
         self.auth_token = TWILIO_AUTH_TOKEN
         self.number_from = TWILIO_NUMBER_FROM
         self.slack_webhook = SLACK_WEBHOOK
+        self.aws_region = AWS_REGION

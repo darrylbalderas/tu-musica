@@ -3,3 +3,5 @@ python-dotenv
 spotipy
 twilio
 diagrams
+pyyaml
+boto3
