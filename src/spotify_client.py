@@ -31,60 +31,62 @@ class SpotifyClient:
                 continue
             yield artist_to_search.lower(), tracks
 
-    def top_recommend_songs(self, genres: List[str], artists_to_search: List[str]):
+    def top_recommended_songs(self, genres: List[str], artists_to_search: List[str]):
         # TODO: Use Multiprocessing to pull uris
         artist_uris = self.get_artists_uris(artists_to_search)
 
-        visited_tracks = set()
+        visited_song_uris = set()
         songs = []
 
         # TODO: Use Multiprocessing to gather recommendations
-        for track in self.recommend_tracks(genres, artist_uris):
+        for recommend_song in self.generate_song_recommendations(genres, artist_uris):
             song = Song(
-                track["name"],
-                track["uri"],
-                track["external_urls"]["spotify"],
-                track["popularity"],
+                recommend_song["name"],
+                recommend_song["uri"],
+                recommend_song["external_urls"]["spotify"],
+                recommend_song["popularity"],
             )
-            if song.name in visited_tracks:
+
+            if song.uri in visited_song_uris:
                 continue
 
-            if not self.pass_audio_criteria(song.uri, song.name):
+            if not self.is_valid_audio_features(song.uri, song.name):
                 continue
+
             songs.append(song)
         return self.top_songs(songs)
 
-    def recommend_tracks(self, genres, artist_uris):
+    def generate_song_recommendations(self, genres, artist_uris):
         return chain(
             self.client.recommendations(seed_genres=genres)["tracks"],
             self.client.recommendations(seed_artists=artist_uris)["tracks"],
         )
 
-    def pass_audio_criteria(self, track_uri: str, track_name: str):
+    def is_valid_audio_features(self, song_uri: str, song_name: str):
         # TODO: Handle 503 errors for getting audio features
         try:
-            audio_features = self.client.audio_features([track_uri])[0]
+            audio_features = self.client.audio_features([song_uri])[0]
         except Exception as e:
             print(e)
             return False
         # TODO: Parse id, duration_ms
-        track_features = self.parse_audio_features(track_name, audio_features)
+        track_features = self.parse_audio_features(song_name, audio_features)
         return track_features.is_twerkable() and track_features.is_clubworthy()
 
-    def parse_audio_features(self, name: str, track: dict):
+    def parse_audio_features(self, song_name: str, audio_features: dict):
         return AudioFeatures(
-            name,
-            track["danceability"],
-            track["energy"],
-            track["key"],
-            track["loudness"],
-            track["mode"],
-            track["speechiness"],
-            track["acousticness"],
-            track["instrumentalness"],
-            track["liveness"],
-            track["valence"],
-            track["tempo"],
+            song_name,
+            audio_features["danceability"],
+            audio_features["energy"],
+            audio_features["key"],
+            audio_features["loudness"],
+            audio_features["mode"],
+            audio_features["speechiness"],
+            audio_features["acousticness"],
+            audio_features["instrumentalness"],
+            audio_features["liveness"],
+            audio_features["valence"],
+            audio_features["tempo"],
         )
 
     def top_songs(self, songs):
