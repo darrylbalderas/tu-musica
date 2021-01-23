@@ -1,5 +1,5 @@
 from src.settings import NUM_TOP_SONGS, TWILIO_ACCOUNT_SID, TWILIO_NUMBER_TO_SEND
-from src.settings import TWILIO_AUTH_TOKEN, TWILIO_NUMBER_FROM
+from src.settings import TWILIO_AUTH_TOKEN, TWILIO_NUMBER_FROM, SLACK_WEBHOOK
 
 
 class Configuration:
@@ -9,3 +9,4 @@ class Configuration:
         self.account_sid = TWILIO_ACCOUNT_SID
         self.auth_token = TWILIO_AUTH_TOKEN
         self.number_from = TWILIO_NUMBER_FROM
+        self.slack_webhook = SLACK_WEBHOOK

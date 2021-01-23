@@ -1,6 +1,6 @@
 from src.config import Configuration
 from src.spotify_client import SpotifyClient
-from src.twilio_client import TwilioClient
+from src.notify import Twilio, Slack
 
 
 def main():
@@ -12,11 +12,6 @@ def main():
 
     recommend_songs = client.top_recommend_songs(genres, artists_to_search)
 
-    for s in recommend_songs:
-        print(s)
+    messages = [f"{s.name}: {s.external_url}\n\n" for s in recommend_songs]
 
-    # messages = [f"{s.name}: {s.external_url}\n\n" for s in recommend_songs]
-
-    # print(messages)
-
-    # TwilioClient(configuration).send_messages(messages)
+    Slack("tu-musica", configuration).notify("".join(messages))

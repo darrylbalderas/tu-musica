@@ -48,6 +48,7 @@ class SpotifyClient:
             )
             if song.name in visited_tracks:
                 continue
+
             if not self.pass_audio_criteria(song.uri, song.name):
                 continue
             songs.append(song)
@@ -66,8 +67,8 @@ class SpotifyClient:
         except Exception as e:
             print(e)
             return False
+        # TODO: Parse id, duration_ms
         track_features = self.parse_audio_features(track_name, audio_features)
-        # TODO: Create SongFilter Class
         return track_features.is_twerkable() and track_features.is_clubworthy()
 
     def parse_audio_features(self, name: str, track: dict):
@@ -86,8 +87,8 @@ class SpotifyClient:
             track["tempo"],
         )
 
-    def top_songs(self, tracks):
+    def top_songs(self, songs):
         return islice(
-            sorted(tracks, key=lambda x: x.popularity, reverse=True),
+            sorted(songs, key=lambda x: x.popularity, reverse=True),
             self.config.num_top_songs,
         )

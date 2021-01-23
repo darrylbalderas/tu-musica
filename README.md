@@ -19,3 +19,5 @@ problem that I am trying to solve by using the Spotify's api and Twilio
 - https://github.com/simonw/datasette
 - https://spotipy.readthedocs.io/en/2.16.1/
 - https://github.com/plamere/spotipy/tree/master/examples
+- https://developer.spotify.com/documentation/web-api/
+- https://pynative.com/make-python-class-json-serializable/ 
