@@ -1,126 +1,49 @@
-from datetime import datetime
-import yaml
-from botocore.client import Config
-from botocore.exceptions import ClientError
-import boto3
+from platform import version
 from src.spotify_client import SpotifyClient
 from src.notify import Slack
 from src.common import Configuration
-from src.settings import NUM_TOP_SONGS, TWILIO_ACCOUNT_SID, TWILIO_NUMBER_TO_SEND
-from src.settings import TWILIO_AUTH_TOKEN, TWILIO_NUMBER_FROM, SLACK_WEBHOOK
-from src.settings import AWS_REGION
+from src import settings
+from src.store import PreferencesStore
 
 
-class PreferencesStore:
-    def __init__(self, region, environment="development", timeout=5, max_retries=0):
-        config = Config(
-            connect_timeout=timeout,
-            retries={"max_attempts": max_retries},
-            region_name=region,
-        )
-        if environment == "production":
-            self.client = boto3.client("dynamodb")
-            self.resource = boto3.resource("dynamodb")
-        else:
-            self.client = boto3.client(
-                "dynamodb", config=config, endpoint_url="http://localhost:8000"
-            )
-            self.resource = boto3.resource(
-                "dynamodb", config=config, endpoint_url="http://localhost:8000"
-            )
+def grab_preferences(configuration: Configuration) -> dict:
+    store = PreferencesStore(configuration.aws_region)
 
-    def table_exist(self, table_name):
-        table = None
-        try:
-            table = self.client.describe_table(TableName=table_name)
-        except ClientError as e:
-            print(e)
-        return table is not None
+    if configuration.db_reset:
+        store.remove_table(configuration.db_table)
 
-    def get_table(self, table):
-        if not self.table_exist(table):
-            return None
-        return self.resource.Table(table)
+    if not store.table_exist(configuration.db_table):
+        key_schema = [{"AttributeName": "stage", "KeyType": "HASH"}]
+        attribute_definition = [{"AttributeName": "stage", "AttributeType": "S"}]
+        throughput = {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
+        store.create_table(configuration.db_table, key_schema, attribute_definition,
+                           throughput)
 
-    def grab_preferences(
-        self, stage: str, version: str, table_name: str, load_from_local: bool = False
-    ) -> dict:
-
-        table = self.get_table(table_name)
-        key = f"{stage.upper()}-{version}"
-
-        if load_from_local:
-            table.put_item(
-                Item={
-                    "stage": key,
-                    "music": self.load_preferences(),
-                    "created_at": datetime.utcnow().isoformat(),
-                }
-            )
-
-        result = self.get_table(table_name).get_item(Key={"stage": key}).get("Item")
-
-        if not result:
-            print("Empty result")
-
-        return result
-
-    @staticmethod
-    def load_preferences(file: str = "preferences.yml"):
-        with open(file) as fin:
-            return yaml.load(fin, Loader=yaml.SafeLoader)
-
-    def create_table(self, table_name, key_schema, attribute_definition, throughput):
-        table = self.resource.create_table(
-            TableName=table_name,
-            AttributeDefinitions=attribute_definition,
-            KeySchema=key_schema,
-            ProvisionedThroughput=throughput,
-        )
-        # Wait until the table exists.
-        table.meta.client.get_waiter("table_exists").wait(TableName=table_name)
-        return table
-
-    def remove_table(self, table_name):
-        return self.client.delete_table(TableName=table_name)
+    return store.grab_preferences(environment="test",
+                                  version="0.0.1",
+                                  table_name=configuration.db_table,
+                                  load_from_local=configuration.load_from_local)
 
 
 def main():
     configuration = Configuration(
-        num_top_songs=NUM_TOP_SONGS,
-        number_to_send=TWILIO_NUMBER_TO_SEND,
-        account_sid=TWILIO_ACCOUNT_SID,
-        auth_token=TWILIO_AUTH_TOKEN,
-        number_from=TWILIO_NUMBER_FROM,
-        slack_webhook=SLACK_WEBHOOK,
-        aws_region=AWS_REGION,
+        num_top_songs=settings.NUM_TOP_SONGS,
+        number_to_send=settings.TWILIO_NUMBER_TO_SEND,
+        account_sid=settings.TWILIO_ACCOUNT_SID,
+        auth_token=settings.TWILIO_AUTH_TOKEN,
+        number_from=settings.TWILIO_NUMBER_FROM,
+        slack_webhook=settings.SLACK_WEBHOOK,
+        aws_region=settings.AWS_REGION,
+        db_reset=settings.DB_RESET,
+        db_table=settings.DB_TABLE,
+        load_from_local=settings.LOAD_FROM_LOCAL,
     )
 
     client = SpotifyClient(configuration)
-    store = PreferencesStore(configuration.aws_region)
+    preferences = grab_preferences(configuration=configuration)
 
-    reset = False
-    load_from_local = False
-
-    db_table_name = "spotify_preferences"
-
-    if reset:
-        store.remove_table(db_table_name)
-
-    if not store.table_exist(db_table_name):
-        key_schema = [{"AttributeName": "stage", "KeyType": "HASH"}]
-        attribute_definition = [{"AttributeName": "stage", "AttributeType": "S"}]
-        throughput = {"ReadCapacityUnits": 5, "WriteCapacityUnits": 5}
-        store.create_table(db_table_name, key_schema, attribute_definition, throughput)
-
-    preferences = store.grab_preferences(
-        "test", "0.0.1", db_table_name, load_from_local=load_from_local
-    )
-
-    song_recommendations = client.top_recommended_songs(
-        preferences["music"]["genres"], preferences["music"]["artists"]
-    )
+    song_recommendations = client.top_recommended_songs(preferences["music"]["genres"],
+                                                        preferences["music"]["artists"])
 
     messages = [f"{s.name}: {s.uri}" for s in song_recommendations]
-
-    Slack("tu-musica", configuration).notify("\n".join(messages))
+    Slack(app_name="tu-musica", configuration=configuration).notify("\n".join(messages))

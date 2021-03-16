@@ -40,3 +40,6 @@ class Configuration:
     auth_token: str
     aws_region: str
     slack_webhook: str
+    db_reset: bool
+    load_from_local: bool
+    db_table: str
