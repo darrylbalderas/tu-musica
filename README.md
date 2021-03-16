@@ -10,7 +10,7 @@ problem that I am trying to solve by using the Spotify's api and Twilio
 
 ## Diagram
 
-![achitecture diagram](./diagrams/top_song_recommendations.png)
+![achitecture diagram](./diagrams/top_nsong_recs.png)
 
 ## Resources
 
