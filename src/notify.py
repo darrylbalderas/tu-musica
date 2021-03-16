@@ -1,8 +1,8 @@
-from twilio.rest import Client
-from src.config import Configuration
-from abc import ABC, abstractmethod
-import requests
 import json
+from abc import ABC, abstractmethod
+from twilio.rest import Client
+import requests
+from src.common import Configuration
 
 
 class Notifier(ABC):
@@ -41,14 +41,16 @@ class Slack(Notifier):
         self.name = app_name
         super().__init__(config)
 
-    def notify(self, message):
+    def notify(self, message: str):
         data = {"text": message}
+        resp = {}
         try:
-            resp = requests.post(self.config.slack_webhook,
-                                 data=json.dumps(data),
-                                 headers={'Content-Type': 'application/json'})
+            resp = requests.post(
+                self.config.slack_webhook,
+                data=json.dumps(data),
+                headers={"Content-Type": "application/json"},
+            )
             resp.raise_for_status()
         except Exception as ex:
-            print('Slack post failed: ', ex)
-        else:
-            return resp
+            print("Slack post failed: ", ex)
+        return resp

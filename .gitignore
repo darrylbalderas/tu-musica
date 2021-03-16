@@ -178,3 +178,4 @@ cython_debug/
 __pycache__/
 .pytest_cache.
 .vscode/
+preferences.yml

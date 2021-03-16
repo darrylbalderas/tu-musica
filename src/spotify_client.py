@@ -1,9 +1,8 @@
 from typing import List
+from itertools import chain, islice
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from src.common import Song, AudioFeatures
-from src.config import Configuration
-from itertools import chain, islice
+from src.common import Song, AudioFeatures, Configuration
 
 
 class SpotifyClient:
@@ -32,13 +31,10 @@ class SpotifyClient:
             yield artist_to_search.lower(), tracks
 
     def top_recommended_songs(self, genres: List[str], artists_to_search: List[str]):
-        # TODO: Use Multiprocessing to pull uris
         artist_uris = self.get_artists_uris(artists_to_search)
-
         visited_song_uris = set()
         songs = []
 
-        # TODO: Use Multiprocessing to gather recommendations
         for recommend_song in self.generate_song_recommendations(genres, artist_uris):
             song = Song(
                 recommend_song["name"],
@@ -63,17 +59,16 @@ class SpotifyClient:
         )
 
     def is_valid_audio_features(self, song_uri: str, song_name: str):
-        # TODO: Handle 503 errors for getting audio features
         try:
             audio_features = self.client.audio_features([song_uri])[0]
         except Exception as e:
             print(e)
             return False
-        # TODO: Parse id, duration_ms
         track_features = self.parse_audio_features(song_name, audio_features)
         return track_features.is_twerkable() and track_features.is_clubworthy()
 
-    def parse_audio_features(self, song_name: str, audio_features: dict):
+    @staticmethod
+    def parse_audio_features(song_name: str, audio_features: dict):
         return AudioFeatures(
             song_name,
             audio_features["danceability"],

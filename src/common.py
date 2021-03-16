@@ -29,3 +29,14 @@ class Song:
     uri: str
     external_url: str
     popularity: int
+
+
+@dataclass
+class Configuration:
+    num_top_songs: int
+    account_sid: str
+    number_to_sd: str
+    number_from: str
+    auth_token: str
+    aws_region: str
+    slack_webhook: str
